@@ -1,0 +1,58 @@
+﻿.board-border {
+    box-sizing: border-box;
+    border-style: solid;
+    border-color: saddlebrown;
+    border-width: 20px;
+}
+.board-inner-border {
+    box-sizing: border-box;
+    border-style: solid;
+    border-color: black;
+    border-width: 4px;
+}
+
+.tile {
+    width:12.5%;
+    /*min-height: 80px;*/
+}
+
+.tile:before {
+    content: "";
+    float: left;
+    padding-top: 100%;
+}
+
+.white-tile {
+    background-color: antiquewhite;
+    border-style: solid;
+    border-color: antiquewhite;
+}
+
+.white-tile:hover {
+    border-color: darkgoldenrod;
+    opacity: 60%;
+}
+
+.black-tile {
+    background-color: saddlebrown;
+    border-style: solid;
+    border-color: saddlebrown;
+}
+
+.black-tile:hover {
+    border-color: darkgoldenrod;
+    opacity: 60%;
+}
+
+.selected {
+    border-color: black;
+    font-weight: bold;
+}
+
+.unselectable {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}

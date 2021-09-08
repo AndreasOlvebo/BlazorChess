@@ -1,0 +1,51 @@
+﻿@using BlazorChess.Models 
+@inject IRefreshService RefreshService
+
+<div class="container defeated-list">
+    <h2 class="text-center">Defeated:</h2>
+    <br/>
+    <div class="row">
+        <div class="col-5 container list-group">
+            <h3 class="text-center">White:</h3>
+            @foreach (var piece in Board.DefeatedPieces.Where(x => x.PieceColor == PieceColor.White))
+            {
+                <ChessPieceCard Piece="@piece" />
+            }
+        </div>
+        <div class="col-2 divider">
+
+        </div>
+        <div class="col-5 container list-group">
+            <h3 class="text-center">Black:</h3>
+            @foreach (var piece in Board.DefeatedPieces.Where(x => x.PieceColor == PieceColor.Black))
+            {
+                <ChessPieceCard Piece="@piece"/>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Board Board { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Run(() => {
+            RefreshService.RefreshRequested += RefreshState;
+        });
+    }
+
+    private async Task RefreshState()
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        RefreshService.RefreshRequested -= RefreshState;
+    }
+}

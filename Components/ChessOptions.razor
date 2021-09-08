@@ -1,0 +1,30 @@
+﻿@using Models 
+
+<h5>Options</h5>
+<div class="container">
+    <div class="row">
+        <EditForm Model="this" class="col-8">
+            <div class="container">
+                <div class="row">
+                    <div class="col-6"><InputCheckbox @bind-Value="Board.Options.EnableTurns" DisplayName="Enable turns" /><label>Enable turns</label></div>
+                    <div class="col-6"><InputCheckbox @bind-Value="Board.Options.HumanVsComputer" DisplayName="Human vs Computer" /><label>Human vs Computer</label></div>
+                </div>
+                <div class="row">
+                    <label>
+                        <InputSelect @bind-Value="Board.Options.PlayerColor" DisplayName="Player color">
+                            <option value="@PieceColor.White">White</option>
+                            <option value="@PieceColor.Black">Black</option>
+                        </InputSelect>
+                        Player color
+                    </label>
+</div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+@code {
+    [Parameter]
+    public Board Board{ get; set; }
+
+    private Options Options { get { return Board.Options; } }
+}

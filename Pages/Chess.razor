@@ -1,0 +1,24 @@
+﻿@page "/chess"
+@using BlazorChess.Models
+
+<h3>Chess</h3>
+
+<div class="container">
+    <div class="row">
+        <ChessOptions Board="@Board"/>
+    </div>
+    <div class="row">
+        <div class="col-8 board-container">
+            <Chessboard Board="@Board" />
+        </div>
+        <div class="col-4">
+            <DefeatedList Board="@Board" />
+        </div>
+    </div>
+</div>
+
+@code {
+    private Board Board = new Board(8, 8);
+
+    private bool EnableTurns { get; set; } = true;
+}

@@ -1,0 +1,16 @@
+﻿@using Models
+@if (Piece is not null && !string.IsNullOrEmpty(Piece.ImagePath))
+{
+    <img class="text-center piece" src="@(Piece.ImagePath)" />
+}
+else
+{
+    @(Piece?.PieceColor)<br />
+    @(Piece?.Name)
+} 
+@code {
+    [Parameter]
+    public Piece Piece { get; set; }
+
+
+}

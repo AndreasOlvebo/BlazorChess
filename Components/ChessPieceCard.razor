@@ -1,0 +1,11 @@
+﻿@using Models
+
+<div class="row list-group-item bg-light piece">
+    <div class="float-left"><img src="@(Piece.ImagePath)" /></div>
+    <div class="float-right piece-name">@(Piece.Name)</div>
+</div>
+
+@code {
+    [Parameter]
+    public Piece Piece { get; set; }
+}

@@ -1,0 +1,22 @@
+﻿.box {
+    display: inline-block;
+    position: absolute;
+    width: 15%;
+    height: 50%;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    border-style: solid;
+    border-width: 1px;
+    border-color: black;
+}
+
+.piece {
+    max-height:70%;
+    display: flex;
+    align-items: center;
+}
+
+.piece-name {
+    vertical-align: middle;
+}

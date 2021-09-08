@@ -1,0 +1,8 @@
+﻿.piece {
+    display: flex;
+    align-items: center;
+}
+
+.piece-name {
+    vertical-align: middle;
+}
