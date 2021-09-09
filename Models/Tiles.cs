@@ -14,6 +14,7 @@ namespace BlazorChess.Models
 
         public Tiles(int rows, int columns, TileColor firstTileColor)
         {
+            firstTileColor = firstTileColor.NextColor();
             TileDictionary = new Dictionary<Position, Tile>();
             for (int i = 0; i < rows; i++)
             {

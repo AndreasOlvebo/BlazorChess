@@ -59,6 +59,11 @@ namespace BlazorChess.Models
             return Tiles[position].ChessPiece;
         }
 
+        public Check IsCheck(PieceColor playerColor)
+        {
+            throw new NotImplementedException();
+        }
+
         //Unused --evaluate if should be removed or kept for later.
         public bool WithinBounds(Position newPosition)
         {

@@ -18,6 +18,9 @@ namespace BlazorChess.Models
             set {
                 if (value is not null && !value.PiecePosition.Equals(TilePosition))
                 {
+                    Console.WriteLine($"Setting Tile[{TilePosition}].ChessPiece: {_chessPiece} to new ChessPiece: {value}");
+                    Console.WriteLine($"Updating Piece.TilePosition from {value.PiecePosition} to {TilePosition}");
+                    Console.WriteLine($"");
                     value.PiecePosition = TilePosition;
                 }
                 _chessPiece = value;
