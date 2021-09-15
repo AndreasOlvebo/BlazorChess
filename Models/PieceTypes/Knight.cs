@@ -12,6 +12,11 @@ namespace BlazorChess.Models.PieceTypes
         {
             IgnoreCollision = true;
         }
+
+        public Knight(Knight knight, Board board) : base(knight, board)
+        {
+
+        }
         public override MoveAllowed AllowMove(Position currentPosition, Position newPosition)
         {
             Position absoluteDifference = currentPosition.Difference(newPosition);
@@ -23,13 +28,9 @@ namespace BlazorChess.Models.PieceTypes
             return MoveAllowed.No;
         }
 
-        public override Piece Clone()
+        public override Piece Clone(Board board)
         {
-            return new Knight(this.PieceColor, new Position(this.PiecePosition), this.CollisionBetween)
-            {
-                FirstMove = this.FirstMove,
-                Defeated = this.Defeated
-            };
+            return new Knight(this, board);
         }
     }
 }

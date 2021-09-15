@@ -14,6 +14,11 @@ namespace BlazorChess.Models.PieceTypes
             MaxRange = new Position(0, 0);
         }
 
+        public Rook(Rook rook, Board board) : base(rook, board)
+        {
+
+        }
+
         public override MoveAllowed AllowMove(Position currentPosition, Position newPosition)
         {
             Position difference = newPosition.Subtract(currentPosition);
@@ -30,13 +35,14 @@ namespace BlazorChess.Models.PieceTypes
             return difference.X == 0 || difference.Y == 0;
         }
 
-        public override Piece Clone()
+        public override Piece Clone(Board board)
         {
-            return new Rook(this.PieceColor, new Position(this.PiecePosition), this.CollisionBetween)
-            {
-                FirstMove = this.FirstMove,
-                Defeated = this.Defeated
-            };
+            return new Rook(this, board);
+            //return new Rook(this.PieceColor, new Position(this.PiecePosition), this.CollisionBetween)
+            //{
+            //    FirstMove = this.FirstMove,
+            //    Defeated = this.Defeated
+            //};
         }
     }
 }

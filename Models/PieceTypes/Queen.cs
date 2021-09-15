@@ -1,4 +1,5 @@
-﻿using BlazorChess.Extensions;
+﻿using BlazorChess.Debugging;
+using BlazorChess.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,13 +14,20 @@ namespace BlazorChess.Models.PieceTypes
             
         }
 
+        public Queen(Queen queen, Board board) : base(queen, board)
+        {
+
+        }
+
         public override MoveAllowed AllowMove(Position currentPosition, Position newPosition)
         {
             Position difference = currentPosition.Difference(newPosition);
             if (MoveIsStraight(difference))
             {
+                //TaggedWriter.WriteLine($"move from {currentPosition} to {newPosition} with difference {difference} is allowed", this);
                 return MoveAllowed.Yes;
             }
+            //TaggedWriter.WriteLine($"move from {currentPosition} to {newPosition} with difference {difference} is NOT allowed", this);
             return MoveAllowed.No;
         }
 
@@ -29,13 +37,9 @@ namespace BlazorChess.Models.PieceTypes
             return (absoluteDifference.X == 0 || absoluteDifference.Y == 0 || absoluteDifference.X == absoluteDifference.Y);
         }
 
-        public override Piece Clone()
+        public override Piece Clone(Board board)
         {
-            return new Queen(this.PieceColor, new Position(this.PiecePosition), this.CollisionBetween)
-            {
-                FirstMove = this.FirstMove,
-                Defeated = this.Defeated
-            };
+            return new Queen(this, board);
         }
     }
 }

@@ -15,5 +15,17 @@ namespace BlazorChess.Models
         {
 
         }
+
+        public Options(Options options)
+        {
+            EnableTurns = options.EnableTurns;
+            HumanVsComputer = options.HumanVsComputer;
+            PlayerColor = options.PlayerColor;
+        }
+
+        public Options Clone()
+        {
+            return new Options(this);
+        }
     }
 }

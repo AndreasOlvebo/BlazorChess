@@ -30,7 +30,7 @@ namespace BlazorChess
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<WeatherForecastService>();
-            services.AddScoped<IRefreshService, DefeatedPiecesRefreshService>();
+            services.AddScoped<IRefreshService, RefreshService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

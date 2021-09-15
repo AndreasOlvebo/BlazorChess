@@ -85,5 +85,39 @@ namespace BlazorChess.Extensions
             }
             return false;
         }
+
+        public static Position[] PositionsWithinRange(this Position position, (Position boardOrigo, Position boardMax) boardSize, Position maximumRange, Position minimumRange)
+        {
+            List<Position> positionsToIterate = new();
+            (int lowX, int highX) = GetLowAndHigh(position.X, boardSize.boardOrigo.X, boardSize.boardMax.X, minimumRange.X, maximumRange.X);
+            (int lowY, int highY) = GetLowAndHigh(position.Y, boardSize.boardOrigo.Y, boardSize.boardMax.Y, minimumRange.Y, maximumRange.Y);
+
+            for (int y = lowY; y <= highY; y++)
+            {
+                for (int x = lowX; x <= highX; x++)
+                {
+                    if (!position.Equals(new Position(x, y)))
+                    {
+                        Position positionToAdd = new Position(x, y);
+                        positionsToIterate.Add(positionToAdd);
+                    }
+                }
+            }
+
+            return positionsToIterate.ToArray();
+        }
+
+        private static (int, int) GetLowAndHigh(int position, int lowEndOfAxis, int highEndOFAxis, int minimumRange, int maximumRange)
+        {
+            int lower = position - maximumRange;
+            lower = maximumRange == 0 || lower < lowEndOfAxis ? lowEndOfAxis : lower;
+            lower = position - lower < minimumRange ? position : lower;
+
+            int higher = position + maximumRange;
+            higher = maximumRange == 0 || higher > highEndOFAxis ? highEndOFAxis : higher;
+            higher = higher - position < minimumRange ? position : higher;
+
+            return (lower, higher);
+        }
     }
 }

@@ -40,6 +40,8 @@
     {
         await InvokeAsync(() =>
         {
+            Console.WriteLine($"BoardId: {Board.BoardId}");
+            Console.WriteLine($"Count: {Board.DefeatedPieces.Count()}");
             StateHasChanged();
         });
     }

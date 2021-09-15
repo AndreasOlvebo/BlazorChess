@@ -1,7 +1,7 @@
 ﻿@using Models
 @if (Piece is not null && !string.IsNullOrEmpty(Piece.ImagePath))
 {
-    <img class="text-center piece" src="@(Piece.ImagePath)" />
+    <img class="text-center piece @(Piece.Tagged ? "tagged" : "")" src="@(Piece.ImagePath)" />
 }
 else
 {
@@ -11,6 +11,4 @@ else
 @code {
     [Parameter]
     public Piece Piece { get; set; }
-
-
 }

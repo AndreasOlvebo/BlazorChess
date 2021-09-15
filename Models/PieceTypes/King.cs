@@ -10,9 +10,14 @@ namespace BlazorChess.Models.PieceTypes
     {
         public King(PieceColor pieceColor, Position piecePosition, Func<Position, Position, bool> collisionBetween) : base(pieceColor, piecePosition, collisionBetween)
         {
-            MinRange = new Position(0, 0);
             MaxRange = new Position(1, 1);
         }
+
+        public King(King king, Board board) : base(king, board)
+        {
+            
+        }
+
         public override MoveAllowed AllowMove(Position currentPosition, Position newPosition)
         {
             Position absoluteDifference = currentPosition.Difference(newPosition);
@@ -24,13 +29,14 @@ namespace BlazorChess.Models.PieceTypes
             return MoveAllowed.No;
         }
 
-        public override Piece Clone()
+        public override Piece Clone(Board board)
         {
-            return new King(this.PieceColor, new Position(this.PiecePosition), this.CollisionBetween)
-            {
-                FirstMove = this.FirstMove,
-                Defeated = this.Defeated
-            };
+            return new King(this, board);
+            //return new King(this.PieceColor, new Position(this.PiecePosition), this.CollisionBetween)
+            //{
+            //    FirstMove = this.FirstMove,
+            //    Defeated = this.Defeated
+            //};
         }
     }
 }

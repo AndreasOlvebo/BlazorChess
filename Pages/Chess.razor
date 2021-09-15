@@ -1,5 +1,6 @@
 ﻿@page "/chess"
 @using BlazorChess.Models
+@inject IRefreshService RefreshService
 
 <h3>Chess</h3>
 
@@ -8,8 +9,22 @@
         <ChessOptions Board="@Board"/>
     </div>
     <div class="row">
+        <div class="col">
+            <p>White in check: @(Board.IsInCheck(PieceColor.White))</p>
+        </div>
+        <div class="col">
+            <p>Black in check: @(Board.IsInCheck(PieceColor.Black))</p>
+        </div>
+        <div class="col">
+            <p>Current player is @(Board.CurrentPlayer)</p>
+        </div>
+        <div class="col">
+            <div class="btn-danger unselectable" @onclick="UndoTurn">Undo turn</div>
+        </div>
+    </div>
+    <div class="row">
         <div class="col-8 board-container">
-            <Chessboard Board="@Board" />
+            <Chessboard Board="@Board" TurnHistory="@TurnHistory" />
         </div>
         <div class="col-4">
             <DefeatedList Board="@Board" />
@@ -18,7 +33,38 @@
 </div>
 
 @code {
-    private Board Board = new Board(8, 8);
+    private Board Board { get; set; } = new Board(8, 8);
+    public TurnHistory TurnHistory { get; set; }
 
-    private bool EnableTurns { get; set; } = true;
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Run(() =>
+        {
+            TurnHistory = new TurnHistory();
+            Board = TurnHistory.AddTurn(Board, null, null, null, null);
+            RefreshService.RefreshBoardRequested += RefreshBoard;
+        });
+    }
+
+    private void UndoTurn()
+    {
+        Console.WriteLine($"Undo turn on Board {Board.BoardId}");
+        Board = TurnHistory.UndoTurn()?.BoardState ?? Board;
+        Console.WriteLine($"Undid turn on Board {Board.BoardId}");
+    }
+
+    private async Task RefreshBoard(Board board)
+    {
+        await InvokeAsync(() =>
+        {
+            Console.WriteLine($"Refreshing board {Board.BoardId} to {board.BoardId}");
+            Board = board;
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        RefreshService.RefreshBoardRequested -= RefreshBoard;
+    }
 }

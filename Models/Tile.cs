@@ -11,6 +11,7 @@ namespace BlazorChess.Models
         public TileColor Color;
         public readonly Position TilePosition;
         public bool Selected { get; set; } = false;
+        public bool EligbleLocation { get; set; } = false;
         public bool Occupied { get { return ChessPiece is not null; } }
         private Piece _chessPiece;
         public Piece ChessPiece { 
@@ -18,9 +19,8 @@ namespace BlazorChess.Models
             set {
                 if (value is not null && !value.PiecePosition.Equals(TilePosition))
                 {
-                    Console.WriteLine($"Setting Tile[{TilePosition}].ChessPiece: {_chessPiece} to new ChessPiece: {value}");
-                    Console.WriteLine($"Updating Piece.TilePosition from {value.PiecePosition} to {TilePosition}");
-                    Console.WriteLine($"");
+                    Console.WriteLine($"HashCode: {this.GetHashCode()}");
+                    Console.WriteLine($"Setting {value.PieceColor} {value.Name}s position from ({value.PiecePosition}) to ({TilePosition})");
                     value.PiecePosition = TilePosition;
                 }
                 _chessPiece = value;
@@ -31,6 +31,19 @@ namespace BlazorChess.Models
         {
             TilePosition = tilePosition;
             Color = color;
+        }
+
+        public Tile(Tile tile, Board board)
+        {
+            Color = tile.Color;
+            TilePosition = tile.TilePosition;
+            Selected = tile.Selected;
+            _chessPiece = tile.ChessPiece?.Clone(board);
+        }
+
+        public Tile Clone(Board board)
+        {
+            return new Tile(this, board);
         }
     }
 }

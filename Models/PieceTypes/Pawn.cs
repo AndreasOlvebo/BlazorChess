@@ -13,6 +13,10 @@ namespace BlazorChess.Models.PieceTypes
             MinRange = new Position(0, 1);
             MaxRange = new Position(1, 2);
         }
+        public Pawn(Pawn pawn, Board board) : base(pawn, board)
+        {
+            
+        }
 
         public override MoveAllowed AllowMove(Position currentPosition, Position newPosition)
         {
@@ -35,13 +39,15 @@ namespace BlazorChess.Models.PieceTypes
             return MoveAllowed.No;
         }
 
-        public override Piece Clone()
+        public override Piece Clone(Board board)
         {
-            return new Pawn(this.PieceColor, new Position(this.PiecePosition), this.CollisionBetween)
-            {
-                FirstMove = this.FirstMove,
-                Defeated = this.Defeated
-            };
+            return new Pawn(this, board);
+            //return new Pawn(this.PieceColor, new Position(this.PiecePosition), this.CollisionBetween)
+            //{
+            //    FirstMove = this.FirstMove,
+            //    Defeated = this.Defeated
+            //};
         }
+
     }
 }

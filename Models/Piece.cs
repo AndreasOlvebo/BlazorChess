@@ -1,4 +1,5 @@
-﻿using BlazorChess.Extensions;
+﻿using BlazorChess.Debugging;
+using BlazorChess.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,17 +9,18 @@ namespace BlazorChess.Models
 {
     public abstract class Piece
     {
-        public readonly PieceColor PieceColor;
+        public PieceColor PieceColor;
         public string Name { get { return this.GetType().Name; } }
         public string ImagePath { get { return $@"/images/{PieceColor}-{Name}.png".ToLower(); } }
         public bool FirstMove { get; set; } = true;
         public bool IgnoreCollision { get; set; } = false;
         public Position PiecePosition { get; set; }
-        protected Position MinRange { get; set; } = new Position(0, 0);
-        protected Position MaxRange { get; set; } = new Position(0, 0);
+        public Position MinRange { get; set; } = new Position(0, 0);
+        public Position MaxRange { get; set; } = new Position(0, 0);
         public bool Defeated { get; set; } = false;
+        public bool Tagged { get; set; } = false;
 
-        protected Func<Position, Position, bool> CollisionBetween;
+        public Func<Position, Position, bool> CollisionBetween;
 
         public Piece(PieceColor pieceColor, Position piecePosition, Func<Position, Position, bool> collisionBetween)
         {
@@ -27,35 +29,52 @@ namespace BlazorChess.Models
             CollisionBetween = collisionBetween;
         }
 
+        public Piece(Piece piece, Board board)
+        {
+            MinRange = piece.MinRange;
+            MaxRange = piece.MaxRange;
+            PiecePosition = piece.PiecePosition;
+            PieceColor = piece.PieceColor;
+            Defeated = piece.Defeated;
+            CollisionBetween = board.CollisionBetween;
+            FirstMove = piece.FirstMove;
+            IgnoreCollision = piece.IgnoreCollision;
+            Tagged = piece.Tagged;
+            piece.Tagged = false;
+        }
+
         public abstract MoveAllowed AllowMove(Position currentPosition, Position newPosition);
-        private void MakeMove(Position confirmedPosition)
+        public void MakeMove(Position confirmedPosition)
         {
             if (FirstMove)
             {
                 FirstMove = false;
             }
-            PiecePosition = confirmedPosition;
+            //PiecePosition = confirmedPosition;
         }
         
-        public virtual (MoveAllowed, Action<Position>) IsMoveAllowed(Position boardSize, Position currentPosition, Position newPosition)
+        public virtual MoveAllowed IsMoveAllowed(Position boardSize, Position currentPosition, Position newPosition)
         {
+            TaggedWriter.WriteLine($"difference curr - new pos: {currentPosition.Difference(newPosition)}", this, newPosition);
+            TaggedWriter.WriteLine($"WithinRange: {WithinRange(currentPosition.Difference(newPosition))}", this, newPosition);
+            TaggedWriter.WriteLine($"CollisionBetween(currentPosition, newPosition): {CollisionBetween(currentPosition, newPosition)}", this, newPosition);
             if (!WithinRange(currentPosition.Difference(newPosition)))
             {
-                return (MoveAllowed.No, null);
+                return MoveAllowed.No;
             }
             if (!IgnoreCollision && CollisionBetween(currentPosition, newPosition))
             {
-                return (MoveAllowed.No, null);
+                return MoveAllowed.No;
             }
             if (PieceColor == PieceColor.Black)
             {
                 currentPosition = currentPosition.Invert(boardSize, Axis.Y);
                 newPosition = newPosition.Invert(boardSize, Axis.Y);
             }
-            return (AllowMove(currentPosition, newPosition), MakeMove);
+            return AllowMove(currentPosition, newPosition);
         }
 
-        public abstract Piece Clone();
+        public abstract Piece Clone(Board board);
 
         protected virtual bool WithinRange(Position difference)
         {

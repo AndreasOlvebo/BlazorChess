@@ -14,6 +14,11 @@ namespace BlazorChess.Models.PieceTypes
             MaxRange = new Position(0, 0);
         }
 
+        public Bishop(Bishop bishop, Board board) : base(bishop, board)
+        {
+
+        }
+
         public override MoveAllowed AllowMove(Position currentPosition, Position newPosition)
         {
             Position absoluteDifference = currentPosition.Difference(newPosition);
@@ -26,13 +31,14 @@ namespace BlazorChess.Models.PieceTypes
             return MoveAllowed.No;
         }
 
-        public override Piece Clone()
+        public override Piece Clone(Board board)
         {
-            return new Bishop(this.PieceColor, new Position(this.PiecePosition), this.CollisionBetween)
-            {
-                FirstMove = this.FirstMove,
-                Defeated = this.Defeated                
-            };
+            return new Bishop(this, board);
+            //return new Bishop(this.PieceColor, new Position(this.PiecePosition), this.CollisionBetween)
+            //{
+            //    FirstMove = this.FirstMove,
+            //    Defeated = this.Defeated                
+            //};
         }
     }
 }

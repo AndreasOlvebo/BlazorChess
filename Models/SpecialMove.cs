@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace BlazorChess.Models
 {
-    public enum Check
+    public enum SpecialMove
     {
         No,
-        Yes,
-        Mate
+        Castle,
+        EnPassant
     }
 }
