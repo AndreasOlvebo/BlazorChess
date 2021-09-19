@@ -45,7 +45,7 @@
 }
 
 .selected {
-    border-color: black;
+    border-color: black !important;
     font-weight: bold;
 }
 

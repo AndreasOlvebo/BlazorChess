@@ -9,6 +9,7 @@ namespace BlazorChess.Models
 {
     public class PieceFactory
     {
+        private int CurrentPieceId { get; set; } = 0;
         private readonly Func<Position, Position, bool> CollisionBetween;
 
         public PieceFactory(Func<Position, Position, bool> collisionBetween)
@@ -17,7 +18,7 @@ namespace BlazorChess.Models
         }
         public Piece GeneratePiece(PieceColor pieceColor, PieceType type, Position piecePosition)
         {
-            return type switch
+            Piece piece = type switch
             {
                 PieceType.Pawn => new Pawn(pieceColor, piecePosition, CollisionBetween),
                 PieceType.Bishop => new Bishop(pieceColor, piecePosition, CollisionBetween),
@@ -27,6 +28,11 @@ namespace BlazorChess.Models
                 PieceType.King => new King(pieceColor, piecePosition, CollisionBetween),
                 _ => throw new NotImplementedException(),
             };
+
+            piece.Id = CurrentPieceId;
+            CurrentPieceId += 1;
+
+            return piece;
         }
 
         public Piece[] GeneratePieces(Position boardSize, PieceType[] pieceTypes)

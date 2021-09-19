@@ -1,4 +1,5 @@
-﻿using BlazorChess.Extensions;
+﻿using BlazorChess.Debugging;
+using BlazorChess.Extensions;
 using BlazorChess.Models.PieceTypes;
 using BlazorChess.Services;
 using System;
@@ -16,11 +17,12 @@ namespace BlazorChess.Models
         public readonly Position BoardOrigo;
         public readonly Position BoardMax;
         public Tiles Tiles { get; set; }
-        //public BoardRow[] Rows;
+        public Tile PreviousTile { get; set; } = null;
         private readonly PieceFactory PieceFactory;
         public List<Piece> DefeatedPieces;
         public readonly Options Options;
         public PieceColor CurrentPlayer { get; set; } = PieceColor.White;
+        private TurnHistory TurnHistory { get; set; }
         private static object _sync = new();
 
         public Board(int rows, int columns)
@@ -50,8 +52,9 @@ namespace BlazorChess.Models
             Tiles = new Tiles(NumberOfRows, NumberOfColumns, board.Tiles[0, 0].Color);
             foreach (var tile in board.Tiles)
             {
-                Tiles[tile.TilePosition].ChessPiece = tile.ChessPiece?.Clone(this); 
+                Tiles[tile.TilePosition] = tile.Clone(this);
             }
+            PreviousTile = Tiles[board.PreviousTile?.TilePosition];
             DefeatedPieces = new List<Piece>();
             
             foreach (var defeatedPiece in board.DefeatedPieces)
@@ -71,6 +74,141 @@ namespace BlazorChess.Models
         public Piece GetPiece(Position position)
         {
             return Tiles[position].ChessPiece;
+        }
+
+        public (ClickResult, Turn) TileClicked(Tile clickedTile, TurnHistory turnHistory)
+        {
+            Board board = this.Clone();
+            (ClickResult clickResult, Turn turn) = TileClickedClone(clickedTile, turnHistory);
+            if (clickResult == ClickResult.Revoke)
+            {
+                turn.BoardState = board;
+            }
+            return (clickResult, turn);
+        }
+
+        //bool = turn passed. Turn = new Turn after processing clicked tile
+        private (ClickResult, Turn) TileClickedClone(Tile clickedTile, TurnHistory turnHistory)
+        {
+            TurnHistory = turnHistory;
+            ClickResult clickResult = ClickResult.Select;
+            Turn newTurn = new Turn();
+            Piece movedPiece = null;
+            Piece defeatedPiece = null;
+            PieceColor currentPlayer = CurrentPlayer;
+            PieceColor opponent = currentPlayer.NextColor();
+            SpecialMove specialMove = SpecialMove.No;
+            if (PreviousTile is not null)
+            {
+                if (PreviousTile == clickedTile)
+                {
+                    DeselectTile(PreviousTile);
+                }
+                else if (PreviousTile.Occupied && IsPlayersTurn(PreviousTile.ChessPiece.PieceColor))
+                {
+                    bool processMove = false;
+                    Piece potentiallyDefeatedPiece = clickedTile.ChessPiece;
+
+                    if (IsSpecialMove(clickedTile, out specialMove))
+                    {
+                        processMove = true;
+                    }
+                    else if (clickedTile.Occupied && clickedTile.ChessPiece.PieceColor == CurrentPlayer)
+                    {
+                        processMove = false;
+                    }
+                    else
+                    {
+                        #region TaggedWriter
+                        TaggedWriter.WriteLine($"About to check if move is allowed for {PreviousTile.ChessPiece.Name} at {PreviousTile.TilePosition} to {clickedTile.TilePosition}", PreviousTile.ChessPiece, clickedTile.TilePosition);
+                        #endregion
+                        MoveAllowed allowMove = PreviousTile.ChessPiece.IsMoveAllowed(BoardMax, PreviousTile.TilePosition, clickedTile.TilePosition);
+                        switch (allowMove)
+                        {
+                            case MoveAllowed.No:
+                                break;
+                            case MoveAllowed.Yes:
+                                if (!clickedTile.Occupied || PreviousTile.ChessPiece.PieceColor != clickedTile.ChessPiece.PieceColor)
+                                {
+                                    processMove = true;
+                                }
+                                break;
+                            case MoveAllowed.IfEmpty:
+                                if (!clickedTile.Occupied)
+                                {
+                                    processMove = true;
+                                }
+                                break;
+                            case MoveAllowed.IfAttack:
+                                if (clickedTile.Occupied && PreviousTile.ChessPiece.PieceColor != clickedTile.ChessPiece.PieceColor)
+                                {
+                                    processMove = true;
+                                }
+                                break;
+                            default:
+                                throw new NotImplementedException();
+                        }
+                    }
+                    if (processMove)
+                    {
+                        if (specialMove != SpecialMove.No)
+                        {
+                            MakeSpecialMove(clickedTile, specialMove);
+                        }
+                        else
+                        {
+                            #region TaggedWriter
+                            TaggedWriter.WriteLine($"MoveChessPiece", PreviousTile.ChessPiece, clickedTile.TilePosition);
+                            #endregion
+                            MoveChessPiece(clickedTile);
+                        }
+
+                        if (IsInCheck(currentPlayer) != Check.No)
+                        {
+                            #region write IN CHECK
+                            Console.WriteLine("----------------------------------");
+                            Console.WriteLine("----------------------------------");
+                            Console.WriteLine("----------------------------------");
+                            Console.WriteLine("-------------IN CHECK-------------");
+                            Console.WriteLine("----------------------------------");
+                            Console.WriteLine("----------------------------------");
+                            Console.WriteLine("----------------------------------");
+                            #endregion
+                            clickResult = ClickResult.Revoke;
+                            Console.WriteLine($"clickResult in Check: {clickResult}");
+                        }
+                        else
+                        {
+                            TaggedWriter.WriteLine($"board: {this}, clicked.chesspiece: {clickedTile.ChessPiece}, previoustile.pos: {PreviousTile.TilePosition}, clicked.pos: {clickedTile.TilePosition}, potential: {potentiallyDefeatedPiece}", PreviousTile.ChessPiece);
+                            PawnToQueen(this);
+                            NextPlayer();
+                            DeselectTile(PreviousTile);
+                            clickResult = ClickResult.Confirm;
+                        }
+                    }
+                    else
+                    {
+                        DeselectTile(PreviousTile);
+                        SelectTile(clickedTile);
+                    }
+
+                }
+                else
+                {
+                    SelectTile(clickedTile);
+                }
+            }
+            else
+            {
+                SelectTile(clickedTile);
+            }
+            if (clickResult == ClickResult.Confirm)
+            {
+                newTurn.BoardState = this;
+                newTurn.MovedPiece = movedPiece;
+                newTurn.DefeatedPiece = defeatedPiece;
+            }
+            return (clickResult, newTurn);
         }
 
         public Check IsInCheck(PieceColor playerColor)
@@ -116,6 +254,32 @@ namespace BlazorChess.Models
         {
             //TODO: check if checkmate
             return check;
+        }
+
+        public void GetBestMove(int iterations)
+        {
+            Board temporaryBoard = this.Clone();
+            var moves = new List<Turn>();
+            var turns = new Dictionary<Tile, Turn>();
+            var occupiedTiles = temporaryBoard.Tiles.Where(tile => tile.Occupied && tile.ChessPiece.PieceColor == temporaryBoard.CurrentPlayer);
+            foreach (var occupiedTile in occupiedTiles)
+            {
+                var tilesInRange = temporaryBoard.GetTilesAndMovesAllowedWithinRange(occupiedTile);
+                foreach (var tileAndMoveAllowedInRange in tilesInRange)
+                {
+                    var tile = tileAndMoveAllowedInRange.Key;
+                    var moveAllowed = tileAndMoveAllowedInRange.Value;
+                    if (!CollisionBetween(occupiedTile.TilePosition, tile.TilePosition) && NotOccupiedByAlly(occupiedTile.ChessPiece, tile))
+                    {
+                        Console.WriteLine($"Move {occupiedTile.TilePosition} to Tile {tile.TilePosition} move allowed: {moveAllowed}");
+                    }
+                }
+            }
+        }
+
+        private bool NotOccupiedByAlly(Piece piece, Tile tile)
+        {
+            return !tile.Occupied || (tile.Occupied && tile.ChessPiece.PieceColor != piece.PieceColor);
         }
 
         private Dictionary<Tile, MoveAllowed> GetTilesAndMovesAllowedWithinRange(Tile tile)
@@ -212,6 +376,214 @@ namespace BlazorChess.Models
             return false;
         }
 
+        private void SelectTile(Tile tile)
+        {
+            tile.Selected = true;
+            DeselectTile(PreviousTile);
+            PreviousTile = tile;
+        }
+
+        private void DeselectTile(Tile tile)
+        {
+            if (tile is not null)
+            {
+                tile.Selected = false;
+                PreviousTile = null;
+            }
+        }
+        private bool IsPlayersTurn(PieceColor player)
+        {
+            return player == CurrentPlayer || !Options.EnableTurns;
+        }
+
+        private void NextPlayer()
+        {
+            if (Options.EnableTurns)
+            {
+                CurrentPlayer = CurrentPlayer == PieceColor.White ? PieceColor.Black : PieceColor.White;
+            }
+        }
+
+        private void MoveChessPiece(Tile clickedTile)
+        {
+            Piece defeatedPiece = null;
+            if (clickedTile.Occupied)
+            {
+                defeatedPiece = clickedTile.ChessPiece;
+                defeatedPiece.Defeated = true;
+                DefeatedPieces.Add(defeatedPiece);
+            }
+            PreviousTile.ChessPiece.FirstMove = false;
+            clickedTile.ChessPiece = PreviousTile.ChessPiece;
+
+            PreviousTile.ChessPiece = null;
+
+            //TurnHistory.AddTurn(Board, clickedTile.ChessPiece, PreviousTile.TilePosition, clickedTile.TilePosition, defeatedPiece);
+
+            //DeselectTile(PreviousTile);
+            //NextPlayer();
+        }
+
+        private void SetEligbleLocations(Piece piece)
+        {
+            //TODO: Do
+        }
+
+        private bool IsSpecialMove(Tile clickedTile, out SpecialMove specialMove)
+        {
+            //TODO: Any of tiles where king is moving (not only final position but the path there) cannot be in line of sight of any opposing piece.
+            //Castling
+            if (CastleAvailable(clickedTile))
+            {
+                specialMove = SpecialMove.Castle;
+                return true;
+            }
+
+            else if (EnPassantAvailable(PreviousTile.ChessPiece, clickedTile))
+            {
+
+                specialMove = SpecialMove.EnPassant;
+                return true;
+            }
+
+            specialMove = SpecialMove.No;
+            return false;
+        }
+
+        private void MakeSpecialMove(Tile clickedTile, SpecialMove specialMove)
+        {
+            switch (specialMove)
+            {
+                case SpecialMove.Castle:
+                    (King king, Rook rook) = GetKingAndRook(clickedTile.ChessPiece, PreviousTile.ChessPiece);
+                    Castle((King)king, (Rook)rook);
+                    break;
+                case SpecialMove.EnPassant:
+                    EnPassant(clickedTile);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private bool EnPassantAvailable(Piece movingPiece, Tile clickedTile)
+        {
+            Piece lastMovedPiece = TurnHistory.LastTurn()?.MovedPiece;
+            if (AnyNullObjects(movingPiece, lastMovedPiece))
+            {
+                return false;
+            }
+
+            if (IsPawn(lastMovedPiece) && IsPawn(movingPiece) && !AreAllies(lastMovedPiece, movingPiece))
+            {
+                if (movingPiece.PiecePosition.Y == lastMovedPiece.PiecePosition.Y
+                && clickedTile.TilePosition.X == lastMovedPiece.PiecePosition.X
+                && lastMovedPiece.PiecePosition.Difference(movingPiece.PiecePosition).Equals(new Position(1, 0)))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private Turn EnPassant(Tile clickedTile)
+        {
+            Tile enemyTile = Tiles[TurnHistory.LastTurn().NewPosition];
+            enemyTile.ChessPiece.Defeated = true;
+            Turn turn = new Turn()
+            {
+                BoardState = this,
+                MovedPiece = PreviousTile.ChessPiece,
+                OriginalPosition = PreviousTile.TilePosition,
+                NewPosition = clickedTile.TilePosition,
+                DefeatedPiece = enemyTile.ChessPiece
+            };
+            DefeatedPieces.Add(enemyTile.ChessPiece);
+            clickedTile.ChessPiece = PreviousTile.ChessPiece;
+            enemyTile.ChessPiece = null;
+            PreviousTile.ChessPiece = null;
+            return turn;
+        }
+
+        private bool CastleAvailable(Tile clickedTile)
+        {
+            if (AnyNullObjects(clickedTile.ChessPiece, PreviousTile.ChessPiece))
+            {
+                return false;
+            }
+            if (AreAllies(clickedTile.ChessPiece, PreviousTile.ChessPiece) && OneOfEachType(clickedTile.ChessPiece, PreviousTile.ChessPiece, typeof(King), typeof(Rook)))
+            {
+                (King king, Rook rook) = GetKingAndRook(clickedTile.ChessPiece, PreviousTile.ChessPiece);
+                if (king.FirstMove && rook.FirstMove)
+                {
+                    return !CollisionBetween(king.PiecePosition, rook.PiecePosition);
+                }
+            }
+            return false;
+        }
+
+        private (King, Rook) GetKingAndRook(Piece a, Piece b)
+        {
+            Piece king = a.GetType() == typeof(King) ? a : b;
+            Piece rook = a.GetType() == typeof(Rook) ? a : b;
+            return ((King)king, (Rook)rook);
+        }
+        private void Castle(King king, Rook rook)
+        {
+            int kingX = rook.PiecePosition.Subtract(king.PiecePosition).X > 0 ? 2 : -2;
+            int rookX = kingX > 0 ? 1 : -1;
+            Tiles[king.PiecePosition].ChessPiece = null;
+            Tiles[rook.PiecePosition].ChessPiece = null;
+            Tiles[king.PiecePosition.X + rookX, king.PiecePosition.Y].ChessPiece = rook;
+            Tiles[king.PiecePosition.X + kingX, king.PiecePosition.Y].ChessPiece = king;
+            (king.FirstMove, rook.FirstMove) = (false, false);
+        }
+
+        private bool PawnToQueen(Board board)
+        {
+            foreach (var tile in board.Tiles)
+            {
+                if (tile.Occupied && IsPawn(tile.ChessPiece) && LastRowForColor(tile.TilePosition, tile.ChessPiece.PieceColor))
+                {
+                    ReplacePieceOnTileWith(tile, PieceType.Queen);
+                }
+            }
+            return false;
+        }
+
+        private bool AreAllies(Piece a, Piece b)
+        {
+            return a.PieceColor == b.PieceColor;
+        }
+
+        private bool OneOfEachType(Piece a, Piece b, Type x, Type y)
+        {
+            return (a.GetType() == x && b.GetType() == y) || (a.GetType() == y && b.GetType() == x);
+        }
+
+        private bool LastRowForColor(Position position, PieceColor pieceColor)
+        {
+            if (pieceColor == PieceColor.White && position.Y == BoardMax.Y)
+            {
+                return true;
+            }
+            else if (pieceColor == PieceColor.Black && position.Y == BoardOrigo.Y)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private bool IsPawn(Piece piece)
+        {
+            return piece.GetType() == typeof(Pawn);
+        }
+
+        private bool AnyNullObjects(params object[] objects)
+        {
+            return objects.Any(obj => obj is null);
+        }
+
         private void PopulateBoard()
         {
             Position boardSize = new Position(NumberOfColumns - 1, NumberOfRows - 1);
@@ -244,8 +616,8 @@ namespace BlazorChess.Models
 
         public Board Clone()
         {
+            Console.WriteLine($"Cloning board {this.GetHashCode()}");
             Board newBoard =  new Board(this);
-            //Console.WriteLine($"Cloning board {this.GetHashCode()} to {newBoard.GetHashCode()}");
             return newBoard;
         }
     }

@@ -19,6 +19,9 @@
             <p>Current player is @(Board.CurrentPlayer)</p>
         </div>
         <div class="col">
+            <div class="btn-secondary unselectable" @onclick="MakeComputerMove">Make computer move</div>
+        </div>
+        <div class="col">
             <div class="btn-danger unselectable" @onclick="UndoTurn">Undo turn</div>
         </div>
     </div>
@@ -41,7 +44,7 @@
         await Task.Run(() =>
         {
             TurnHistory = new TurnHistory();
-            Board = TurnHistory.AddTurn(Board, null, null, null, null);
+            Board = TurnHistory.AddTurnAndReturnBoardState(Board, null, null, null, null);
             RefreshService.RefreshBoardRequested += RefreshBoard;
         });
     }
@@ -51,6 +54,11 @@
         Console.WriteLine($"Undo turn on Board {Board.BoardId}");
         Board = TurnHistory.UndoTurn()?.BoardState ?? Board;
         Console.WriteLine($"Undid turn on Board {Board.BoardId}");
+    }
+
+    private void MakeComputerMove()
+    {
+        Board.GetBestMove(1);
     }
 
     private async Task RefreshBoard(Board board)

@@ -10,7 +10,7 @@ namespace BlazorChess.Debugging
     {
         public static void WriteLine(string input, Piece piece = null, Position pos = null)
         {
-            if (piece is not null && piece.Tagged && (pos is null || pos.Equals(new Position(7,4))))
+            if (piece is not null && piece.Tracked && (pos is null || pos.Equals(new Position(7,4))))
             {
                 Console.WriteLine(input);
             }

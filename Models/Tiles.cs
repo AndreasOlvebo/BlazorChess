@@ -45,12 +45,27 @@ namespace BlazorChess.Models
         }
         public Tile this[Position position]
         {
-            get { return TileDictionary[position]; }
+            get 
+            {
+                if (position is null)
+                {
+                    return null;
+                }
+                return TileDictionary[position];
+            }
+            set
+            {
+                TileDictionary[position] = value;
+            }
         }
 
         public Tile this[int x, int y]
         {
             get { return TileDictionary[new Position(x, y)]; }
+            set
+            {
+                TileDictionary[new Position(x, y)] = value;
+            }
         }
 
         public Tile Get(Position position)

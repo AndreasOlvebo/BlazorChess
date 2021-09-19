@@ -19,8 +19,6 @@ namespace BlazorChess.Models
             set {
                 if (value is not null && !value.PiecePosition.Equals(TilePosition))
                 {
-                    Console.WriteLine($"HashCode: {this.GetHashCode()}");
-                    Console.WriteLine($"Setting {value.PieceColor} {value.Name}s position from ({value.PiecePosition}) to ({TilePosition})");
                     value.PiecePosition = TilePosition;
                 }
                 _chessPiece = value;

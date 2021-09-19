@@ -9,6 +9,7 @@ namespace BlazorChess.Models
 {
     public abstract class Piece
     {
+        public int Id { get; set; }
         public PieceColor PieceColor;
         public string Name { get { return this.GetType().Name; } }
         public string ImagePath { get { return $@"/images/{PieceColor}-{Name}.png".ToLower(); } }
@@ -18,7 +19,7 @@ namespace BlazorChess.Models
         public Position MinRange { get; set; } = new Position(0, 0);
         public Position MaxRange { get; set; } = new Position(0, 0);
         public bool Defeated { get; set; } = false;
-        public bool Tagged { get; set; } = false;
+        public bool Tracked { get; set; } = false;
 
         public Func<Position, Position, bool> CollisionBetween;
 
@@ -31,6 +32,7 @@ namespace BlazorChess.Models
 
         public Piece(Piece piece, Board board)
         {
+            Id = piece.Id;
             MinRange = piece.MinRange;
             MaxRange = piece.MaxRange;
             PiecePosition = piece.PiecePosition;
@@ -39,8 +41,8 @@ namespace BlazorChess.Models
             CollisionBetween = board.CollisionBetween;
             FirstMove = piece.FirstMove;
             IgnoreCollision = piece.IgnoreCollision;
-            Tagged = piece.Tagged;
-            piece.Tagged = false;
+            Tracked = piece.Tracked;
+            piece.Tracked = false;
         }
 
         public abstract MoveAllowed AllowMove(Position currentPosition, Position newPosition);
